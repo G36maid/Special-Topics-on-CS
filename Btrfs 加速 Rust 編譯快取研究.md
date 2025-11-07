@@ -186,4 +186,113 @@ Btrfs 的效能表現出高度的工作負載依賴性。Phoronix 的數據顯�
 
 #### **引用的著作**
 
-1\. BTRFS storage driver | Docker Docs, https://docs.docker.com/engine/storage/drivers/btrfs-driver/ 2\. Docker and Layers \- Reddit, https://www.reddit.com/r/docker/comments/69at69/docker\_and\_layers/ 3\. Btrfs: Difference between snapshotting and cp \--reflink : r/linuxquestions \- Reddit, https://www.reddit.com/r/linuxquestions/comments/p7wx4j/btrfs\_difference\_between\_snapshotting\_and\_cp/ 4\. Reflink \- BTRFS documentation \- Read the Docs, https://btrfs.readthedocs.io/en/latest/Reflink.html 5\. Default copy Vs reflink : r/btrfs \- Reddit, https://www.reddit.com/r/btrfs/comments/1bum79p/default\_copy\_vs\_reflink/ 6\. The two sides of reflink() \- LWN.net, https://lwn.net/Articles/331808/ 7\. Hard links vs cp \--reflink on BTRFS to save space : r/synology \- Reddit, https://www.reddit.com/r/synology/comments/jupa14/hard\_links\_vs\_cp\_reflink\_on\_btrfs\_to\_save\_space/ 8\. Storage drivers \- Docker Docs, https://docs.docker.com/engine/storage/drivers/ 9\. Docker Image Layers \- What They Are & How They Work \- Spacelift, https://spacelift.io/blog/docker-image-layers 10\. Understand images, containers, and storage drivers \- Why Docker? \- Read the Docs, https://test-dockerrr.readthedocs.io/en/latest/userguide/storagedriver/imagesandcontainers/ 11\. According to the union file system, does image actually container another image? \- Stack Overflow, https://stackoverflow.com/questions/47946898/according-to-the-union-file-system-does-image-actually-container-another-image 12\. Storage | Docker Docs, https://docs.docker.com/engine/storage/ 13\. Select a storage driver \- Docker Docs, https://docs.docker.com/engine/storage/drivers/select-storage-driver/ 14\. Incremental Rust builds in CI \- Earthly Blog, https://earthly.dev/blog/incremental-rust-builds/ 15\. Incremental Compilation | Rust Blog, https://blog.rust-lang.org/2016/09/08/incremental.html 16\. Incremental compilation in detail \- Rust Compiler Development Guide, https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation-in-detail.html 17\. Implement "pipelined" rustc compilation · Issue \#6660 · rust-lang/cargo \- GitHub, https://github.com/rust-lang/cargo/issues/6660 18\. Why You Need Sccache \- Elijah Potter, https://elijahpotter.dev/articles/why\_you\_need\_sccache 19\. Optimizing Rust Build Speed with sccache \- Earthly Blog, https://earthly.dev/blog/rust-sccache/ 20\. mozilla/sccache: Sccache is a ccache-like tool. It is used as a compiler wrapper and avoids compilation when possible. Sccache has the capability to utilize caching in remote storage environments, including various cloud storage options, or alternatively, in local storage. \- GitHub, https://github.com/mozilla/sccache 21\. Buildless \+ SCCache, https://docs.less.build/docs/sccache 22\. Blog Archive » sccache, Mozilla's distributed compiler cache, now written in Rust, https://blog.mozilla.org/ted/2016/11/21/sccache-mozillas-distributed-compiler-cache-now-written-in-rust/ 23\. Environment Variables \- The Cargo Book \- MIT, https://web.mit.edu/rust-lang\_v1.25/arch/amd64\_ubuntu1404/share/doc/rust/html/cargo/reference/environment-variables.html 24\. What is the difference between Cargo's environment variables RUSTC and RUSTC\_WRAPPER? \- Stack Overflow, https://stackoverflow.com/questions/50446200/what-is-the-difference-between-cargos-environment-variables-rustc-and-rustc-wra 25\. Environment Variables \- The Cargo Book \- Rust Documentation, https://doc.rust-lang.org/cargo/reference/environment-variables.html 26\. Configuration \- The Cargo Book \- Rust Documentation, https://doc.rust-lang.org/cargo/reference/config.html 27\. 2023-04: Why should you give Sccache a try? \- Xuanwo's Blog, https://xuanwo.io/en-us/reports/2023-04/ 28\. sccache is ccache with cloud storage \- GitHub, https://github.com/wasmerio/sccache 29\. Fast Rust Builds with sccache and GitHub Actions \- Depot.dev, https://depot.dev/blog/sccache-in-github-actions 30\. Bcachefs, Btrfs, EXT4, F2FS & XFS File-System Performance On ..., https://www.phoronix.com/review/linux-615-filesystems/2 31\. BTRFS \+ many small files \= heavy space wasted \- Reddit, https://www.reddit.com/r/btrfs/comments/m9qsi3/btrfs\_many\_small\_files\_heavy\_space\_wasted/ 32\. which file sytem to use for daily work? should we turn on btrfs compression? \- GitHub Gist, https://gist.github.com/braindevices/fde49c6a8f6b9aaf563fb977562aafec 33\. btrfs vs ext4 performance \- Reddit, https://www.reddit.com/r/btrfs/comments/14y99p2/btrfs\_vs\_ext4\_performance/ 34\. Btrfs Preps Performance Improvements & Experimental Large Folios For Linux 6.17, https://www.phoronix.com/news/Linux-6.17-Btrfs 35\. Btrfs To See More Performance Improvements With Linux 6.16 \- Phoronix, https://www.phoronix.com/news/Linux-6.16-Btrfs-Performance 36\. Distributed compilation with sccache \- rtyler, https://brokenco.de/2025/01/05/sccache-distributed-compilation.html 37\. In Linux, which filesystems support reflinks?, https://unix.stackexchange.com/questions/631237/in-linux-which-filesystems-support-reflinks
+1. **BTRFS storage driver | Docker Docs**  
+   https://docs.docker.com/engine/storage/drivers/btrfs-driver/
+
+2. **Docker and Layers - Reddit**  
+   https://www.reddit.com/r/docker/comments/69at69/docker_and_layers/
+
+3. **Btrfs: Difference between snapshotting and cp --reflink : r/linuxquestions - Reddit**  
+   https://www.reddit.com/r/linuxquestions/comments/p7wx4j/btrfs_difference_between_snapshotting_and_cp/
+
+4. **Reflink - BTRFS documentation - Read the Docs**  
+   https://btrfs.readthedocs.io/en/latest/Reflink.html
+
+5. **Default copy Vs reflink : r/btrfs - Reddit**  
+   https://www.reddit.com/r/btrfs/comments/1bum79p/default_copy_vs_reflink/
+
+6. **The two sides of reflink() - LWN.net**  
+   https://lwn.net/Articles/331808/
+
+7. **Hard links vs cp --reflink on BTRFS to save space : r/synology - Reddit**  
+   https://www.reddit.com/r/synology/comments/jupa14/hard_links_vs_cp_reflink_on_btrfs_to_save_space/
+
+8. **Storage drivers - Docker Docs**  
+   https://docs.docker.com/engine/storage/drivers/
+
+9. **Docker Image Layers - What They Are & How They Work - Spacelift**  
+   https://spacelift.io/blog/docker-image-layers
+
+10. **Understand images, containers, and storage drivers - Why Docker? - Read the Docs**  
+    https://test-dockerrr.readthedocs.io/en/latest/userguide/storagedriver/imagesandcontainers/
+
+11. **According to the union file system, does image actually container another image? - Stack Overflow**  
+    https://stackoverflow.com/questions/47946898/according-to-the-union-file-system-does-image-actually-container-another-image
+
+12. **Storage | Docker Docs**  
+    https://docs.docker.com/engine/storage/
+
+13. **Select a storage driver - Docker Docs**  
+    https://docs.docker.com/engine/storage/drivers/select-storage-driver/
+
+14. **Incremental Rust builds in CI - Earthly Blog**  
+    https://earthly.dev/blog/incremental-rust-builds/
+
+15. **Incremental Compilation | Rust Blog**  
+    https://blog.rust-lang.org/2016/09/08/incremental.html
+
+16. **Incremental compilation in detail - Rust Compiler Development Guide**  
+    https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation-in-detail.html
+
+17. **Implement "pipelined" rustc compilation · Issue #6660 · rust-lang/cargo - GitHub**  
+    https://github.com/rust-lang/cargo/issues/6660
+
+18. **Why You Need Sccache - Elijah Potter**  
+    https://elijahpotter.dev/articles/why_you_need_sccache
+
+19. **Optimizing Rust Build Speed with sccache - Earthly Blog**  
+    https://earthly.dev/blog/rust-sccache/
+
+20. **mozilla/sccache: Sccache is a ccache-like tool - GitHub**  
+    https://github.com/mozilla/sccache
+
+21. **Buildless + SCCache**  
+    https://docs.less.build/docs/sccache
+
+22. **Blog Archive » sccache, Mozilla's distributed compiler cache, now written in Rust**  
+    https://blog.mozilla.org/ted/2016/11/21/sccache-mozillas-distributed-compiler-cache-now-written-in-rust/
+
+23. **Environment Variables - The Cargo Book - MIT**  
+    https://web.mit.edu/rust-lang_v1.25/arch/amd64_ubuntu1404/share/doc/rust/html/cargo/reference/environment-variables.html
+
+24. **What is the difference between Cargo's environment variables RUSTC and RUSTC_WRAPPER? - Stack Overflow**  
+    https://stackoverflow.com/questions/50446200/what-is-the-difference-between-cargos-environment-variables-rustc-and-rustc-wra
+
+25. **Environment Variables - The Cargo Book - Rust Documentation**  
+    https://doc.rust-lang.org/cargo/reference/environment-variables.html
+
+26. **Configuration - The Cargo Book - Rust Documentation**  
+    https://doc.rust-lang.org/cargo/reference/config.html
+
+27. **2023-04: Why should you give Sccache a try? - Xuanwo's Blog**  
+    https://xuanwo.io/en-us/reports/2023-04/
+
+28. **sccache is ccache with cloud storage - GitHub**  
+    https://github.com/wasmerio/sccache
+
+29. **Fast Rust Builds with sccache and GitHub Actions - Depot.dev**  
+    https://depot.dev/blog/sccache-in-github-actions
+
+30. **Bcachefs, Btrfs, EXT4, F2FS & XFS File-System Performance On Linux 6.15 - Phoronix**  
+    https://www.phoronix.com/review/linux-615-filesystems/2
+
+31. **BTRFS + many small files = heavy space wasted - Reddit**  
+    https://www.reddit.com/r/btrfs/comments/m9qsi3/btrfs_many_small_files_heavy_space_wasted/
+
+32. **which file sytem to use for daily work? should we turn on btrfs compression? - GitHub Gist**  
+    https://gist.github.com/braindevices/fde49c6a8f6b9aaf563fb977562aafec
+
+33. **btrfs vs ext4 performance - Reddit**  
+    https://www.reddit.com/r/btrfs/comments/14y99p2/btrfs_vs_ext4_performance/
+
+34. **Btrfs Preps Performance Improvements & Experimental Large Folios For Linux 6.17 - Phoronix**  
+    https://www.phoronix.com/news/Linux-6.17-Btrfs
+
+35. **Btrfs To See More Performance Improvements With Linux 6.16 - Phoronix**  
+    https://www.phoronix.com/news/Linux-6.16-Btrfs-Performance
+
+36. **Distributed compilation with sccache - rtyler**  
+    https://brokenco.de/2025/01/05/sccache-distributed-compilation.html
+
+37. **In Linux, which filesystems support reflinks? - Unix & Linux Stack Exchange**  
+    https://unix.stackexchange.com/questions/631237/in-linux-which-filesystems-support-reflinks

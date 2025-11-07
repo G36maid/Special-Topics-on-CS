@@ -42,43 +42,50 @@
 
 % 摘要
 \section*{摘要}
-本研究旨在探討運用 Btrfs 檔案系統的寫入時複製（Copy-on-Write, CoW）特性，以加速 Rust 語言的編譯建置快取流程。Rust 專案的編譯時間過長是開發流程中的主要瓶頸，而現有的快取方案如 sccache 在本地端操作上仍有儲存與 I/O 效率的限制。本研究提出一個基於 Btrfs 原生功能（如 reflink 與快照）的快取框架，期望能透過檔案系統層級的優化，實現近乎即時的快取複製與還原，並大幅降低儲存空間佔用。研究將分析此方法的技術可行性，設計一個概念性的多層次快取架構，並規劃效能驗證藍圖，以評估其相較於傳統檔案系統及現有工具的優勢。此框架的核心概念是透過 Btrfs 快照，以原子性的方式將整個 target 目錄替換為一個預先存在的、已知的良好狀態，從而完美地保存 Rust 自身高度優化的增量編譯資料庫，這是像 sccache 這類編譯器包裝器快取工具無法實現的。
+本研究旨在探討運用 Btrfs 檔案系統的寫入時複製（Copy-on-Write, CoW）特性，以加速 Rust 語言的編譯建置快取流程。Rust 專案的編譯時間是開發流程中的主要瓶頸，而現有快取方案在處理頻繁的分支切換時效率有限。本研究提出一個基於 Btrfs 快照（snapshot）的快取框架，期望透過檔案系統層級的操作，實現近乎即時的快取還原，並降低儲存空間佔用。研究將分析此方法的技術可行性，設計一個概念性的快取架構，並規劃效能驗證藍圖。此框架的核心概念是透過 Btrfs 快照，以原子性的方式將整個 \texttt{target} 目錄切換至一個已知狀態，從而保存 Rust 的增量編譯資料庫。相較之下，\texttt{sccache} 等編譯器層級的工具無法對整個建置目錄進行原子性快照還原。
 
 \section*{研究動機與研究問題}
-Rust 語言以其安全性與高效能獲得廣泛應用，但其複雜的編譯過程常導致開發者需耗費大量時間等待專案建置，尤其在大型專案中，此問題嚴重影響開發迭代效率。為解決此問題，社群開發了如 sccache 等外部快取工具，但這些工具多依賴網路共享或傳統檔案複製，不僅可能引入網路延遲，在本地端操作時也因大量 I/O 與儲存冗餘而有效能瓶頸。
+Rust 語言以其安全性與高效能獲得廣泛應用，但其複雜的編譯過程常導致開發者需耗費大量時間等待專案建置，嚴重影響開發迭代效率。為解決此問題，Rust 編譯器內建了增量編譯機制 \cite{rust_incremental_blog}，而社群也開發了如 \texttt{sccache} \cite{sccache_repo} 等外部快取工具。然而，這些方案在處理頻繁的程式碼分支切換時仍存在瓶頸。特別是當開發者執行 \texttt{git checkout} 切換分支時，原始碼檔案的時間戳會改變，常導致 Rust 原生的增量編譯快取大量失效，引發不必要的重新編譯。
 
-Btrfs 檔案系統提供了原生的寫入時複製（CoW）功能，包含 reflink（檔案層級的 CoW 連結）與快照（子卷層級的即時備份）。當檔案系統中的資料被修改時，Btrfs 並不會直接覆寫原始的資料區塊，而是將修改後的內容寫入一個新的區塊，然後更新檔案系統的中繼資料以指向這個新位置。快照是一種特殊的子磁區，它在建立之初與其來源子磁區共享所有資料區塊，因此建立快照幾乎是一個瞬時完成的中繼資料操作。Docker 已在生產環境中成功運用 Btrfs 驅動程式，將映像檔分層對應到 Btrfs 子磁區，並將容器的可寫狀態對應到 Btrfs 快照，這為本研究提供了強而有力的技術先例。
-
-我們觀察到，Rust 編譯過程產生的 target 目錄結構龐大且內容相似度高，特別是其增量編譯系統會將編譯過程模型化為一個由查詢組成的有向無環圖，並將這個相依性圖以及查詢結果持久化到 target/incremental 目錄內。這個複雜的資料庫對於實現快速的重新建置至關重要，但當開發者切換 Git 分支時，這些精細的增量快取往往會失效。這正符合 Btrfs CoW 機制的應用場景。
+Btrfs 檔案系統提供了原生的寫入時複製（CoW）功能，包含 reflink（檔案層級的 CoW 連結）與快照（子卷層級的即時備份）。Docker 已在生產環境中運用 Btrfs 驅動程式，將映像檔分層對應到 Btrfs 子磁區，並將容器的可寫狀態對應到 Btrfs 快照 \cite{docker_btrfs_driver}，這為本研究提供了技術上的參考。我們觀察到，Rust 編譯過程產生的 \texttt{target} 目錄結構龐大且內容相似度高，特別是其增量編譯資料庫對於實現快速重新建置至關重要 \cite{rust_incremental_detail}。這正符合 Btrfs CoW 機制的應用場景。
 
 基於以上觀察，本研究希望回答以下核心研究問題：
-
-\textbf{（一）}如何利用 Btrfs 的 reflink 與快照機制，設計一個高效能、低儲存佔用的 Rust 編譯快取框架？
-
-\textbf{（二）}相較於在 ext4 等傳統檔案系統上使用標準檔案複製，Btrfs 的 CoW 操作在快取建置與還原速度上能帶來多大的效能提升？
-
-\textbf{（三）}此框架應如何與 Rust 原生的增量編譯及 sccache 等外部工具整合，以形成一個更全面的多層次快取體系？
+\begin{enumerate}
+    \item 如何利用 Btrfs 的快照機制，設計一個高效能、低儲存佔用的 Rust 編譯快取框架？
+    \item 相較於在 ext4 等傳統檔案系統上使用標準檔案複製，Btrfs 的 CoW 操作在快取建置與還原速度上能帶來多大的效能提升？
+    \item 此框架應如何與 Rust 原生的增量編譯及 \texttt{sccache} 等外部工具整合，以形成一個更全面的多層次快取體系？
+\end{enumerate}
 
 \section*{初步文獻探討}
-現有的 Rust 編譯快取方案主要分為三個層次。第一層是 Rust 編譯器原生的增量編譯機制，它採用一種「紅綠」(red-green) 演算法來追蹤相依性，並將中間結果快取於 target/incremental 目錄中。這是最精細的層級，能理解 Rust 語言的內部語義。第二層是 sccache 等編譯器包裝器工具，它透過攔截編譯指令，對編譯單元的所有輸入進行雜湊指紋運算來產生快取鍵，並支援本地磁碟或遠端儲存後端（如 S3、Redis）。sccache 運作於編譯器調用層級，將 rustc 視為黑盒子，對 Rust 內部的相依圖一無所知。
+現有的 Rust 編譯快取方案主要分為不同層次。第一層是 Rust 編譯器原生的增量編譯機制，它採用精密的演算法來追蹤相依性，並將中間結果快取於 \texttt{target/incremental} 目錄中 \cite{rust_incremental_blog}。第二層是 \texttt{sccache} 等編譯器包裝器工具，它透過攔截編譯指令，對編譯單元的輸入進行雜湊運算來產生快取鍵，並支援本地或遠端儲存 \cite{sccache_repo}。
 
-然而，這些方案在處理頻繁的情境切換（如 Git 分支切換）時仍有限制。當執行 git checkout 切換分支時，原始碼檔案的時間戳會改變，導致增量編譯快取大量失效。sccache 雖可從遠端獲取編譯產物，但需要處理成千上萬個小檔案的網路 I/O，且無法保存增量編譯的內部狀態。
-
-Btrfs 在處理大型檔案或目錄的複製與版本控制上具備獨特優勢。根據相關研究，Btrfs 快照是原子性的元數據操作，能在單一瞬間捕捉整個目錄樹的狀態，且初始不佔用額外物理空間。Docker 使用 Btrfs 驅動程式時，每個映像檔層被儲存為一個唯讀的 Btrfs 子磁區，當容器被建立時，Docker 會為該映像檔最終層建立一個可讀寫的快照，這個快照便成為容器的可寫層。當容器修改檔案時，Btrfs 的 CoW 機制被觸發，相關的資料區塊被複製到容器的快照中，而原始映像檔層則保持不變。
-
-本研究提出將這種模式應用於 Rust 編譯快取，將「特定分支/提交的快取建置狀態」對應到「target 目錄的 Btrfs 快照」。這構成了一個第三層次的快取機制，運作於檔案系統區塊層級，能完美保存最精細層級的增量編譯快取，填補現有方案的空白。
+這兩種快取機制運作於不同的抽象層級：Rust 增量編譯最為精細，理解語言內部語義與相依圖；\texttt{sccache} 運作於編譯器調用層級，將 \texttt{rustc} 視為黑盒子。關鍵差異在於，當開發者切換 Git 分支時，第一層增量快取會因時間戳改變而失效，第二層 \texttt{sccache} 雖可快速提供編譯產物，但無法保存增量快取內部狀態。本研究探討一個「第零層」的快取機制，以檔案系統快照保存整個 \texttt{target} 目錄的狀態，從而完整保護第一層快取在跨分支切換時的完整性。
 
 \section*{初步研究方法}
-本研究提出一個名為「快照交換模型」（Snapshot Swap Model）的概念性快取框架。其核心設計是將 Rust 專案的 target 編譯輸出目錄存放於一個獨立的 Btrfs 子卷中，並透過快照管理其不同的建置狀態。
+本研究提出一個名為「快照交換模型」（Snapshot Swap Model）的概念性快取框架。其核心設計是將 Rust 專案的 \texttt{target} 編譯輸出目錄存放於一個獨立的 Btrfs 子卷中，並透過快照管理其不同的建置狀態。
 
-\textbf{工作流程設計：}專案的原始碼與 target 目錄必須位於同一個 Btrfs 檔案系統上。（1）\textbf{基準快照建立：}在主分支上成功完成一次全新建置後，為 target 子磁區建立一個唯讀快照，例如 \texttt{btrfs subvolume snapshot -r target target.main.clean}。（2）\textbf{開發開始：}當開發者切換到功能分支時，從最相關的基準快照建立一個新的可讀寫快照，例如 \texttt{btrfs subvolume snapshot target.main.clean target.feature-branch}。（3）\textbf{增量建置：}所有後續的 \texttt{cargo build} 指令都在這個可讀寫的快照中進行，完美地利用 Rust 原生的增量編譯功能。（4）\textbf{情境切換：}當執行 \texttt{git checkout main} 時，建置協調腳本將卸載或重新命名當前的 target.feature-branch，並將 target.main.clean 快照（或其可讀寫複本）掛載為活躍的 target。這個操作是近乎瞬時的，下一次在 main 分支上執行的編譯將會是一個「空建置」，耗時極短。
+\textbf{工作流程設計：} 專案的原始碼與 \texttt{target} 目錄必須位於同一個 Btrfs 檔案系統上。(1) \textbf{基準快照建立：} 在主分支上成功完成一次全新建置後，為 \texttt{target} 子磁區建立一個唯讀快照。(2) \textbf{開發開始：} 當開發者切換到功能分支時，從最相關的基準快照建立一個新的可讀寫快照，作為當前活躍的 \texttt{target} 目錄。(3) \textbf{增量建置：} 所有後續的 \texttt{cargo build} 指令都在這個可讀寫的快照中進行。(4) \textbf{情境切換：} 當執行 \texttt{git checkout} 時，透過腳本將活躍的 \texttt{target} 目錄原子性地切換回對應分支的快照。
 
-\textbf{多層次快取整合：}此框架形成一個互補的多層次快取體系。第 0 層為 Btrfs 快照模型，提供對整個建置目錄的完美狀態保真度，以及近乎零成本的還原時間。第 1 層為位於 target/incremental 內的 Rust 原生增量快取，第 0 層 Btrfs 快取的主要效益正在於跨情境切換時能夠完整地保護第 1 層快取的完整性。第 2 層為 sccache，對於從相依性套件產生新的編譯產物，或在不共享 Btrfs 磁區的專案間共享產物，sccache 仍然具有價值。
+\textbf{概念驗證計畫：} 為驗證此方法，我們將設計一個概念驗證腳本，在一個中等規模的 Rust 專案上進行基準測試。測試將比較在 Btrfs 與 ext4 兩種檔案系統上，執行「清除、切換分支、重新編譯」等典型開發場景所需的時間。效能評估將基於以下指標：(1) \textbf{主要指標：重新建置時間。} 測量在兩個具備顯著差異的分支之間執行 \texttt{git checkout} 後，重新編譯專案所需的時間。預期此方法相較於傳統快取方案，在時間上能有顯著縮短。(2) \textbf{次要指標：} 記錄快照建立與還原操作的耗時、多次建置循環後的磁碟空間使用率，以及快照管理腳本本身的效能開銷。
 
-\textbf{概念驗證計畫：}為驗證此方法的可行性，我們將設計一個概念驗證腳本，在一個中等規模的 Rust 專案上進行基準測試。環境設定包括：準備一台裝有近期 Linux 核心的虛擬機，建立專用區塊裝置並使用 \texttt{mkfs.btrfs} 格式化，為專案建立頂層子磁區，並在其內為 target 目錄建立專用子磁區。協調腳本將使用 Bash 或 Python 開發，包含快照建立、啟用、修剪等函數，並可由 git hooks 觸發或手動執行。
+本研究所提出的方法，其預期效益在於縮短開發情境切換所需的時間、確保快取狀態的一致性，並減少本地開發的 I/O 開銷。然而，此方法亦存在待評估的挑戰，包括對特定檔案系統（Btrfs）的依賴性、快照管理腳本的實作複雜度、長期使用下可能的儲存空間佔用，以及 Btrfs 在特定 I/O 負載下的效能表現 \cite{phoronix_btrfs}。本研究的概念驗證結果，將作為評估此方法實用性的依據。本研究的適用範圍目前限於採用 Btrfs 檔案系統的 Linux 開發環境。
 
-測試將比較在 Btrfs 與 ext4 兩種檔案系統上，執行「清除、切換分支、重新編譯」等典型開發場景所需的時間。關鍵評估指標包含：（1）主要指標為在兩個差異顯著的分支之間執行 git checkout 後的重新建置時間，成功標準為相較於溫快取的 sccache 減少至少 50\%，相較於冷快取減少至少 80\%。（2）次要指標包括快照建立與還原時間、經過 20 次以上循環後的磁碟空間消耗，以及快照管理操作本身所花費的時間。測試將使用 hyperfine 等工具進行嚴謹的基準測試，並使用 \texttt{btrfs filesystem usage} 監控磁碟空間使用情況。
+\begin{thebibliography}{9}
+\bibitem{docker_btrfs_driver}
+Docker Documentation. \textit{BTRFS storage driver}. [Online]. Available: \texttt{https://docs.docker.com/engine/storage/drivers/btrfs-driver/}
 
-此研究呈現了一個高風險、高回報的機會。潛在利益包括近乎瞬時的情境切換、完美的快取保真度，以及減少網路 I/O。潛在風險則包括檔案系統鎖定、協調的複雜性、儲存開銷，以及 Btrfs 在某些 I/O 模式下可能表現不佳的效能風險。概念驗證的結果將成為決定是否進行更廣泛、生產級別實作的唯一依據。
+\bibitem{rust_incremental_blog}
+The Rust Programming Language Blog. (2016). \textit{Incremental Compilation}. [Online]. Available: \texttt{https://blog.rust-lang.org/2016/09/08/incremental.html}
+
+\bibitem{rust_incremental_detail}
+Rust Compiler Development Guide. \textit{Incremental compilation in detail}. [Online]. Available: \texttt{https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation-in-detail.html}
+
+\bibitem{sccache_repo}
+Mozilla. \textit{mozilla/sccache}. [Online]. GitHub. Available: \texttt{https://github.com/mozilla/sccache}
+
+\bibitem{phoronix_btrfs}
+Phoronix. (2024). \textit{Bcachefs, Btrfs, EXT4, F2FS \& XFS File-System Performance On Linux 6.15}. [Online]. Available: \texttt{https://www.phoronix.com/review/linux-615-filesystems}
+
+\end{thebibliography}
 
 \end{document}
