@@ -1,0 +1,45 @@
+# LaTeX 輔助檔案
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.nav
+*.snm
+*.vrb
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+*.xdv
+
+# LaTeX 生成的 PDF（如果不想追蹤）
+# *.pdf
+
+# 編輯器暫存檔
+*~
+*.swp
+*.swo
+*.bak
+.DS_Store
+
+# 作業系統檔案
+Thumbs.db
+Desktop.ini
+
+# IDE 設定檔
+.vscode/
+.idea/
+.zed/
+*.sublime-*
+
+# Make 相關
+*.d
+
+# 備份檔案
+*.backup
+*.old

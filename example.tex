@@ -1,0 +1,59 @@
+%%  請將 Typeset 改為 XeLaTeX %%
+%%  左上角  Menu  → Compiler %%
+
+\documentclass[a4paper,12pt]{article}
+\usepackage[margin=2cm]{geometry} % 設定頁面邊界
+% 字體
+\usepackage{fontspec} % 設定字體
+\usepackage{xeCJK} % 讓中英文字體分開設置
+\setmainfont{Liberation Serif} % 設定英文為 Liberation Serif 字體
+\setCJKmainfont{TW-MOE-Std-Kai} % 設定中文為標楷體
+
+\XeTeXlinebreaklocale "zh" % 中文自動換行
+\XeTeXlinebreakskip = 0pt plus 1pt
+
+% 設定章節標題格式，置左粗體
+\usepackage{titlesec}
+\titleformat{\section}{\fontsize{12pt}{12pt}\selectfont\bfseries}{\thesection}{0em}{}
+\titlespacing*{\section}{0pt}{*2}{*1.5}
+
+% 段落間距
+\setlength{\parskip}{0.5em}
+
+% 開始文件
+\begin{document}
+
+% 封面
+\begin{titlepage}
+\begin{center}
+\vspace*{2cm}
+{\fontsize{16pt}{16pt}\selectfont\bfseries 國立臺灣師範大學 資訊工程學系}\\[1cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries 114 資訊專題研究（一）期中書面報告}\\[4cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries 中文主題名稱}\\[1cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries 英文主題名稱}\\[9cm]
+{\fontsize{12pt}{12pt}\selectfont 指導教授 OOO 教授}\\[0.5cm]
+{\fontsize{12pt}{12pt}\selectfont 學生 OOO 撰}\\[0.5cm]
+{\fontsize{12pt}{12pt}\selectfont 中華民國 114 年 11 月}
+\end{center}
+\end{titlepage}
+
+% 報告內容
+\pagenumbering{arabic}
+
+% 摘要
+\section*{摘要}
+（請在此處填寫您的摘要內容。摘要應簡潔說明研究的核心內容、方法與預期貢獻。）
+
+% 研究動機與研究問題
+\section*{研究動機與研究問題}
+（請在此處填寫您的研究動機與研究問題。說明為什麼這個主題重要，以及您希望透過本研究回答的具體問題。）
+
+% 初步文獻探討
+\section*{初步文獻探討}
+（請在此處填寫您的初步文獻探討。簡要回顧相關領域的現有研究，並說明您的研究與它們的關係。）
+
+% 初步研究方法
+\section*{初步研究方法}
+（請在此處填寫您的初步研究方法。描述您計畫如何進行研究、收集資料與分析，以回答您的研究問題。）
+
+\end{document}
