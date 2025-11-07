@@ -1,0 +1,76 @@
+%%  請將 Typeset 改為 XeLaTeX %%
+%%  左上角  Meun  → Compiler %%
+
+\documentclass[a4paper,12pt]{article}
+\usepackage[margin=2cm]{geometry} % 設定頁面邊界
+% 字體
+\usepackage{fontspec} % 設定字體
+\usepackage{xeCJK} % 讓中英文字體分開設置
+\setmainfont{Times New Roman} % 設定英文為 Times New Roman 字體
+\setCJKmainfont{TW-Kai} % 設定中文為標楷體
+
+\XeTeXlinebreaklocale "zh" % 中文自動換行
+\XeTeXlinebreakskip = 0pt plus 1pt
+
+% 設定章節標題格式，置左粗體
+\usepackage{titlesec}
+\titleformat{\section}{\fontsize{12pt}{12pt}\bfseries}{\thesection}{0em}{}
+\titlespacing*{\section}{0pt}{*3.5}{*2}
+
+
+% 開始文件
+\begin{document}
+
+% 封面
+\begin{titlepage}
+\begin{center}
+\vspace*{2cm}
+{\fontsize{16pt}{16pt}\selectfont\bfseries 國立臺灣師範大學 資訊工程學系}\\[1cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries 114 資訊專題研究（一）期中書面報告}\\[4cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries 運用 Btrfs 寫入時複製機制加速 Rust 建置快取之研究}\\[1cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries A Study on Accelerating Rust Build Caching with Btrfs Copy-on-Write Mechanism}\\[9cm]
+{\fontsize{12pt}{12pt}\selectfont 指導教授 紀博文 教授}\\[0.5cm]
+{\fontsize{12pt}{12pt}\selectfont 學生 鍾詠傑 撰}\\[0.5cm]
+{\fontsize{12pt}{12pt}\selectfont 中華民國 114 年 11 月}
+\end{center}
+\end{titlepage}
+
+% 報告內容
+\pagenumbering{arabic}
+
+% 摘要
+\section*{摘要}
+本研究旨在探討運用 Btrfs 檔案系統的寫入時複製（Copy-on-Write, CoW）特性，以加速 Rust 語言的編譯建置快取流程。Rust 專案的編譯時間過長是開發流程中的主要瓶頸，而現有的快取方案如 sccache 在本地端操作上仍有儲存與 I/O 效率的限制。本研究提出一個基於 Btrfs 原生功能（如 reflink 與快照）的快取框架，期望能透過檔案系統層級的優化，實現近乎即時的快取複製與還原，並大幅降低儲存空間佔用。我們將分析此方法的技術可行性，設計一個概念性的多層次快取架構，並規劃效能驗證藍圖，以評估其相較於傳統檔案系統及現有工具的優勢。
+
+\vspace{1cm}
+
+% 研究動機與研究問題
+\section*{研究動機與研究問題}
+Rust 語言以其安全性與高效能獲得廣泛應用，但其複雜的編譯過程常導致開發者需耗費大量時間等待專案建置，尤其在大型專案中，此問題嚴重影響開發迭代效率。為解決此問題，社群開發了如 sccache 等外部快取工具，但這些工具多依賴網路共享或傳統檔案複製，不僅可能引入網路延遲，在本地端操作時也因大量 I/O 與儲存冗餘而有效能瓶頸。
+
+另一方面，Btrfs 檔案系統提供了原生的寫入時複製（CoW）功能，包含 reflink（檔案層級的 CoW 連結）與快照（子卷層級的即時備份），這些特性使其在處理大型檔案或目錄的複製與版本控制上具備獨特優勢。我們觀察到，Rust 編譯過程產生的 target 目錄結構龐大且內容相似度高，這正符合 Btrfs CoW 機制的應用場景。
+
+基於以上觀察，本研究的主要動機在於探索是否能將 Btrfs 的檔案系統層級優勢，轉化為解決 Rust 編譯痛點的應用層級方案。我們希望回答以下核心研究問題：
+\begin{enumerate}
+    \item 如何利用 Btrfs 的 reflink 與快照機制，設計一個高效能、低儲存佔用的 Rust 編譯快取框架？
+    \item 相較於在 ext4 等傳統檔案系統上使用標準檔案複製，Btrfs 的 CoW 操作在快取建置與還原速度上能帶來多大的效能提升？
+    \item 此框架應如何與 Rust 原生的增量編譯及 sccache 等外部工具整合，以形成一個更全面的多層次快取體系？
+\end{enumerate}
+
+\vspace{1cm}
+
+% 初步的研究方法
+\section*{初步研究方法}
+為回答上述研究問題，本研究提出一個名為「快照交換模型」（Snapshot Swap Model）的概念性快取框架，並規劃了初步的實作與驗證方法。
+
+核心設計是將 Rust 專案的 \texttt{target} 編譯輸出目錄存放於一個獨立的 Btrfs 子卷中。其工作流程如下：
+\begin{enumerate}
+    \item \textbf{快取儲存}：在每次成功編譯後，系統會為當前的 \texttt{target} 子卷建立一個唯讀快照。此快照以該次建置的唯一識別碼（例如 Git commit hash）命名，並儲存於快取庫中。由於 Btrfs 快照是元數據操作，建立過程近乎即時且不佔用額外物理空間。
+    \item \textbf{快取還原}：當需要切換至不同分支或版本時，系統會尋找對應識別碼的快照。若找到，則將現有的 \texttt{target} 子卷替換為該快照的一個可寫複本。此操作同樣是元數據層級的交換，能瞬間完成 \texttt{target} 目錄的還原。
+    \item \textbf{多層次整合}：此框架將作為底層快取，優先處理本地端的 \texttt{target} 目錄版本控制。對於單一檔案的細微變動，則仍依賴 Rust 編譯器自身的增量編譯機制。同時，可選擇性地將 sccache 作為上層快取，處理遠端或共享的編譯單元，形成一個互補的多層次快取體系。
+\end{enumerate}
+
+為驗證此方法的可行性，我們將設計一個概念驗證（PoC）腳本，在一個中等規模的 Rust 專案上進行基準測試。測試將比較在 Btrfs 與 ext4 兩種檔案系統上，執行「清除、切換分支、重新編譯」等典型開發場景所需的時間。關鍵評估指標將包含：快取建立與還原時間、磁碟空間佔用變化，以及總編譯時間的改善幅度。
+
+
+\end{document}
