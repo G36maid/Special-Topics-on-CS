@@ -9,28 +9,44 @@ SRC_DIR = src
 REPORT_DIR = report
 
 TARGET_NAME = midterm_report
+FINAL_NAME = final_report
 EXAMPLE_NAME = example
 
 TARGET = $(REPORT_DIR)/$(TARGET_NAME).pdf
+FINAL = $(REPORT_DIR)/$(FINAL_NAME).pdf
 EXAMPLE = $(REPORT_DIR)/$(EXAMPLE_NAME).pdf
 
 SOURCES = $(SRC_DIR)/$(TARGET_NAME).tex
+FINAL_SRC = $(SRC_DIR)/$(FINAL_NAME).tex
 EXAMPLE_SRC = $(SRC_DIR)/$(EXAMPLE_NAME).tex
 
 # 預設目標
 .PHONY: all
-all: $(TARGET)
+all: $(TARGET) $(FINAL)
 
 # 建立 report 目錄
 $(REPORT_DIR):
 	mkdir -p $(REPORT_DIR)
 
-# 編譯主要報告
+# 編譯期中報告
+.PHONY: midterm
+midterm: $(TARGET)
+
 $(TARGET): $(SOURCES) | $(REPORT_DIR)
 	@echo "正在編譯 $(TARGET_NAME).tex ..."
 	$(LATEX) $(LATEXFLAGS) -output-directory=$(SRC_DIR) $(SOURCES)
 	mv $(SRC_DIR)/$(TARGET_NAME).pdf $(TARGET)
 	@echo "編譯完成！報告位於 $(TARGET)"
+
+# 編譯期末報告
+.PHONY: final
+final: $(FINAL)
+
+$(FINAL): $(FINAL_SRC) | $(REPORT_DIR)
+	@echo "正在編譯 $(FINAL_NAME).tex ..."
+	$(LATEX) $(LATEXFLAGS) -output-directory=$(SRC_DIR) $(FINAL_SRC)
+	mv $(SRC_DIR)/$(FINAL_NAME).pdf $(FINAL)
+	@echo "編譯完成！報告位於 $(FINAL)"
 
 # 編譯範例文件
 .PHONY: example
@@ -62,7 +78,7 @@ clean:
 .PHONY: cleanall
 cleanall: clean
 	@echo "清理所有生成檔案..."
-	rm -f $(TARGET) $(EXAMPLE)
+	rm -f $(TARGET) $(FINAL) $(EXAMPLE)
 
 # 檢視 PDF（使用系統預設程式）
 .PHONY: view
@@ -76,6 +92,12 @@ view-example: $(EXAMPLE)
 	@echo "開啟範例 PDF 檔案..."
 	xdg-open $(EXAMPLE) 2>/dev/null || open $(EXAMPLE) 2>/dev/null || echo "請手動開啟 $(EXAMPLE)"
 
+# 檢視期末報告 PDF
+.PHONY: view-final
+view-final: $(FINAL)
+	@echo "開啟期末報告 PDF 檔案..."
+	xdg-open $(FINAL) 2>/dev/null || open $(FINAL) 2>/dev/null || echo "請手動開啟 $(FINAL)"
+
 # 重新編譯（先清理再編譯）
 .PHONY: rebuild
 rebuild: clean all
@@ -84,12 +106,15 @@ rebuild: clean all
 .PHONY: help
 help:
 	@echo "可用的 make 指令："
-	@echo "  make          - 編譯主要報告 ($(TARGET))"
+	@echo "  make          - 編譯所有報告"
+	@echo "  make midterm  - 編譯期中報告 ($(TARGET))"
+	@echo "  make final    - 編譯期末報告 ($(FINAL))"
 	@echo "  make example  - 編譯範例文件 ($(EXAMPLE))"
-	@echo "  make twice    - 編譯兩次以確保交叉引用正確"
+	@echo "  make twice    - 編譯兩次以確保交叉引用正確 (僅期中報告)"
 	@echo "  make clean    - 清理輔助檔案（保留 PDF）"
 	@echo "  make cleanall - 清理所有生成檔案（包含 PDF）"
 	@echo "  make view     - 開啟主要報告的 PDF"
+	@echo "  make view-final - 開啟期末報告的 PDF"
 	@echo "  make view-example - 開啟範例文件的 PDF"
 	@echo "  make rebuild  - 清理後重新編譯"
 	@echo "  make help     - 顯示此幫助訊息"
