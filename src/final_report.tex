@@ -1,0 +1,85 @@
+%%  請將 Typeset 改為 XeLaTeX %%
+%%  左上角  Menu  → Compiler %%
+
+\documentclass[a4paper,12pt]{article}
+\usepackage[margin=2cm]{geometry} % 設定頁面邊界
+% 字體
+\usepackage{fontspec} % 設定字體
+\usepackage{xeCJK} % 讓中英文字體分開設置
+\setmainfont{Liberation Serif} % 設定英文為 Liberation Serif 字體
+\setCJKmainfont{TW-MOE-Std-Kai} % 設定中文為標楷體
+
+\XeTeXlinebreaklocale "zh" % 中文自動換行
+\XeTeXlinebreakskip = 0pt plus 1pt
+
+% 設定章節標題格式，置左粗體
+\usepackage{titlesec}
+\titleformat{\section}{\fontsize{12pt}{12pt}\selectfont\bfseries}{\thesection}{0em}{}
+\titlespacing*{\section}{0pt}{*2}{*1.5}
+
+% 段落間距
+\setlength{\parskip}{0.5em}
+
+% 開始文件
+\begin{document}
+
+% 封面
+\begin{titlepage}
+\begin{center}
+\vspace*{2cm}
+{\fontsize{16pt}{16pt}\selectfont\bfseries 國立臺灣師範大學 資訊工程學系}\\[1cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries 114 資訊專題研究（一）期中書面報告}\\[4cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries 運用 Btrfs 寫入時複製機制加速 Rust 建置快取之研究}\\[1cm]
+{\fontsize{16pt}{16pt}\selectfont\bfseries A Study on Accelerating Rust Build Caching with Btrfs Copy-on-Write Mechanism}\\[9cm]
+{\fontsize{12pt}{12pt}\selectfont 指導教授 紀博文 教授}\\[0.5cm]
+{\fontsize{12pt}{12pt}\selectfont 學生 鍾詠傑 撰}\\[0.5cm]
+{\fontsize{12pt}{12pt}\selectfont 中華民國 114 年 11 月}
+\end{center}
+\end{titlepage}
+
+% 報告內容
+\pagenumbering{arabic}
+
+% 摘要
+\section*{摘要}
+% 在此處撰寫您的摘要。
+
+\section*{研究動機與研究問題}
+% 在此處撰寫您的研究動機與研究問題。
+
+\section*{文獻回顧與探討}
+% 在此處撰寫您的文獻回顧與探討。
+
+\section*{研究方法及步驟}
+% 在此處撰寫您的研究方法及步驟。
+
+\section*{實驗結果}
+% 在此處撰寫您的實驗結果。
+
+\section*{分析與討論}
+% 在此處撰寫您的分析與討論。
+
+\section*{結論及未來研究方向}
+% 在此處撰寫您的結論及未來研究方向。
+
+\section*{參考文獻}
+
+\begin{thebibliography}{9}
+\bibitem{docker_btrfs_driver}
+Docker Documentation. \textit{BTRFS storage driver}. [Online]. Available: \texttt{https://docs.docker.com/engine/storage/drivers/btrfs-driver/}
+
+\bibitem{rust_incremental_blog}
+The Rust Programming Language Blog. (2016). \textit{Incremental Compilation}. [Online]. Available: \texttt{https://blog.rust-lang.org/2016/09/08/incremental.html}
+
+\bibitem{rust_incremental_detail}
+Rust Compiler Development Guide. \textit{Incremental compilation in detail}. [Online]. Available: \texttt{https://rustc-dev-guide.rust-lang.org/queries/incremental-compilation-in-detail.html}
+
+\bibitem{sccache_repo}
+Mozilla. \textit{mozilla/sccache}. [Online]. GitHub. Available: \texttt{https://github.com/mozilla/sccache}
+
+\bibitem{phoronix_btrfs}
+Phoronix. (2024). \textit{Bcachefs, Btrfs, EXT4, F2FS \& XFS File-System Performance On Linux 6.15}. [Online]. Available: \texttt{https://www.phoronix.com/review/linux-615-filesystems}
+
+\end{thebibliography}
+
+\end{document}
