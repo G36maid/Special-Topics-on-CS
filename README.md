@@ -1,6 +1,19 @@
-# LaTeX 專案報告
+# CS 專題研究報告 (Special Topics on CS)
 
-本專案包含一份使用 LaTeX 編寫的期中報告。
+本專案用於整理「計算機科學專題」(Special Topics on Computer Science) 的相關文件，包含期中與期末報告的 LaTeX 原始碼、實驗數據、投影片及參考資料。
+
+## 目錄結構
+
+專案目錄結構如下：
+
+*   **`src/`**: 報告的 LaTeX 原始碼 (`.tex`) 及相關資源檔。
+    *   `midterm_report.tex`: 期中報告原始碼。
+    *   `final_report.tex`: 期末報告原始碼。
+*   **`report/`**: 編譯完成的 PDF 報告檔案存放處。
+*   **`experiment/`**: 實驗相關的程式碼、數據或腳本。
+*   **`slide/`**: 專題報告投影片。
+*   **`docs/`**: 參考文件與文獻。
+*   **`notes/`**: 會議記錄與筆記。
 
 ## 相依套件
 
@@ -31,9 +44,20 @@ paru -S ttf-liberation ttf-tw-moe-std-kai
 
 本專案使用 `Makefile` 來簡化編譯流程。以下是幾個常用的指令：
 
-*   **編譯主要報告** (`midterm_report.pdf`):
+*   **編譯所有報告**:
+    同時編譯期中與期末報告。
     ```bash
     make all
+    ```
+
+*   **編譯期中報告** (`midterm_report.pdf`):
+    ```bash
+    make midterm
+    ```
+
+*   **編譯期末報告** (`final_report.pdf`):
+    ```bash
+    make final
     ```
 
 *   **編譯範例文件** (`example.pdf`):
@@ -42,7 +66,7 @@ paru -S ttf-liberation ttf-tw-moe-std-kai
     ```
 
 *   **編譯兩次以修正交互引用**:
-    如果遇到引用 (citation) 或目錄相關的警告，請執行此指令。
+    如果遇到引用 (citation) 或目錄相關的警告，請執行此指令（目前預設針對期中報告）。
     ```bash
     make twice
     ```
@@ -54,7 +78,7 @@ paru -S ttf-liberation ttf-tw-moe-std-kai
     ```
 
 *   **完整重新編譯**:
-    先執行清理，然後再重新編譯主要報告。
+    先執行清理，然後再重新編譯所有報告。
     ```bash
     make rebuild
     ```
