@@ -120,14 +120,52 @@ Btrfs 的 `FICLONE` ioctl 允許建立檔案的「淺層複製」（Reflink）�
 
 儘管我們可以透過 `git-restore-mtime` 修復檔案的時間戳，但若無法解決指紋雜湊中的路徑問題，Cargo 仍會視快取為無效。
 
-### 6.3 連結器瓶頸與 Mold (Linker Bottleneck)
-透過 `cargo build --timings` 分析證實，在解決了依賴編譯後，**連結階段 (Linking)** 成為新的瓶頸，佔據了增量建置時間的 **40% 至 90%**。
+### 6.3 完全重建瓶頸：實驗數據分析 (Full Rebuild Bottleneck)
 
-單純的 Btrfs 快照無法加速連結，因為傳統連結器 (`ld` / `lld`) 仍需執行序列化的 I/O。分析指出，必須將本方案與現代化連結器 **Mold** 結合：
-*   **Reflink** 負責以 O(1) 速度準備輸入檔 (Object Files)。
-*   **Mold** 負責以記憶體頻寬速度生成輸出檔 (Executable)。
+#### 6.3.1 Zed 編輯器測試數據
 
-兩者結合形成了「輸入秒級還原 + 輸出秒級生成」的協同效應。
+透過 `cargo build --timings` 對 Zed Editor 進行完整編譯分析，揭示了 Reflink 方案失敗的根本原因：
+
+**實驗設定：**
+- **專案規模**: 1,620 個編譯單元
+- **測試環境**: Zed Editor v0.219.0
+- **編譯模式**: Debug build
+
+**編譯時間分布（完整建置 138.8 秒）：**
+
+| 階段 | 時間 | 佔比 | 代表性單元 |
+|------|------|------|------------|
+| **Codegen** | ~119s | **86%** | `syn` (22.6s), `editor` (23.9s), `gpui` (17.2s) |
+| **Frontend** | ~14s | **10%** | 型別檢查、宏展開 |
+| **Linking** | **5.9s** | **4.3%** | `zed` 最終二進位檔 |
+
+**關鍵發現：**
+1. **Linking 並非主要瓶頸**：最終連結階段僅佔 4.3% (5.9s / 138.8s)
+2. **Codegen 主導編譯時間**：程式碼生成階段佔據 86% 的時間
+3. **Reflink 觸發完全重建**：
+   - Traditional Incremental: **4.85s** (僅重新連結)
+   - Reflink Incremental: **143.99s** (≈ Cold Start 146.11s)
+   - 比值: 143.99s / 4.85s = **29.7x 慢**
+
+#### 6.3.2 失敗原因：Cargo Fingerprint 失效
+
+```
+Dirty Units: 1620/1620 (100%)
+Fresh Units: 0
+```
+
+Reflink 雖成功復原 `target/` 目錄（~2.5s），但因 **絕對路徑依賴** 導致：
+- Cargo 檢測到工作目錄變更 (`/main/` → `/worktrees/bench-zed/`)
+- 所有單元的 Fingerprint Hash 失效
+- 觸發 **完全重建** (Full Rebuild)，而非增量編譯
+
+**效能分析：**
+```
+傳統增量編譯: 4.85s = 0.0s (編譯) + 4.85s (連結)
+Reflink「增量」: 143.99s = 2.5s (reflink) + 119s (重新編譯) + 5.9s (連結) + 16.6s (開銷)
+```
+
+這證實了問題核心在於 **Cargo 的路徑敏感性**，而非連結器效能。
 
 ## (七) 結論及未來展望
 
