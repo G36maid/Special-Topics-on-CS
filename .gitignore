@@ -43,3 +43,6 @@ Desktop.ini
 # 備份檔案
 *.backup
 *.old
+
+# 提交目錄
+submit/
